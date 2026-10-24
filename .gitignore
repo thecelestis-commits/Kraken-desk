@@ -1,0 +1,12 @@
+logs/
+venv/
+__pycache__/
+.env
+.pin
+.github_token
+.lock
+mode
+enabled
+state_*.json
+cache/
+*.new

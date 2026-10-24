@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e11">
+<title>Kraken-Desk</title>
+<style>
+:root{
+  --bg:#0b0e11;--panel:#12161b;--panel2:#171c22;--line:#232a32;--text:#e6e9ec;--dim:#8a949e;--faint:#56606a;
+  --green:#3ddc84;--red:#ff5d5d;--amber:#f5b942;--blue:#5aa9ff;--violet:#a78bfa;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,"Segoe UI",Roboto,Inter,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+.wrap{max-width:980px;margin:0 auto;padding:16px 16px 48px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.brand{display:flex;align-items:center;gap:10px}
+.brand b{font-size:17px;letter-spacing:.02em}
+.badge{font:600 11px var(--mono);padding:3px 8px;border-radius:99px;letter-spacing:.08em}
+.badge.live{background:rgba(255,93,93,.14);color:var(--red);border:1px solid rgba(255,93,93,.35)}
+.badge.paper{background:rgba(90,169,255,.12);color:var(--blue);border:1px solid rgba(90,169,255,.3)}
+.upd{color:var(--dim);font-size:12px;text-align:right}
+.pulse{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:6px;animation:p 2s infinite}
+@keyframes p{0%{box-shadow:0 0 0 0 rgba(61,220,132,.6)}70%{box-shadow:0 0 0 8px rgba(61,220,132,0)}100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}
+
+.hero{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;grid-template-columns:1fr auto;gap:8px 16px}
+.hero .big{font:600 34px/1.05 var(--mono);letter-spacing:-.02em}
+.hero .sub{color:var(--dim);font-size:13px}
+.chg{font:600 15px var(--mono)}
+.up{color:var(--green)}.down{color:var(--red)}
+.light{display:flex;align-items:center;gap:8px;justify-content:flex-end;font-size:13px;color:var(--dim)}
+.dot{width:12px;height:12px;border-radius:50%}
+.dot.g{background:var(--green);box-shadow:0 0 12px rgba(61,220,132,.7)}
+.dot.r{background:var(--red);box-shadow:0 0 12px rgba(255,93,93,.6)}
+.kpis{grid-column:1/-1;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px}
+.kpi{background:var(--panel2);border-radius:10px;padding:9px 10px}
+.kpi span{display:block;color:var(--faint);font-size:11px;margin-bottom:3px}
+.kpi b{font:600 14px var(--mono)}
+#spark{grid-column:1/-1;width:100%;height:70px;margin-top:4px}
+.alert{margin-top:10px;padding:10px 12px;border-radius:10px;background:rgba(255,93,93,.1);border:1px solid rgba(255,93,93,.35);color:var(--red);font-size:13px;display:none}
+
+h2{font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:26px 0 10px;font-weight:600}
+
+/* Fließband */
+.belt{position:relative;display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.belt:before{content:"";position:absolute;left:4%;right:4%;top:31px;height:4px;border-radius:4px;
+  background:repeating-linear-gradient(90deg,var(--line) 0 14px,#2d3640 14px 22px);background-size:22px 4px;animation:roll 1.4s linear infinite}
+@keyframes roll{to{background-position:22px 0}}
+.st{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 8px 10px;text-align:center;cursor:pointer;transition:border-color .15s,transform .15s}
+.st:hover{border-color:#3a4450}.st.sel{border-color:var(--blue);transform:translateY(-2px)}
+.st .ic{width:38px;height:38px;margin:0 auto 6px;border-radius:10px;display:grid;place-items:center;background:var(--panel2);font:700 13px var(--mono);color:var(--dim)}
+.st .nm{font-size:11.5px;font-weight:600;line-height:1.2;min-height:28px}
+.st .ct{font:600 18px var(--mono);margin-top:4px}
+.st .lb{font-size:10.5px;color:var(--faint)}
+.st.hot .ic{background:rgba(61,220,132,.14);color:var(--green)}
+.detail{margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.detail .hd{padding:11px 14px;border-bottom:1px solid var(--line);font-size:13px;color:var(--dim)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font-size:13px}
+.row:last-child{border-bottom:0}
+.row .p{font:600 13px var(--mono);min-width:92px}
+.row .r{color:var(--dim);flex:1}
+.sig{display:flex;gap:3px}
+.sig i{width:8px;height:8px;border-radius:2px;background:#2a323b}
+.sig i.on{background:var(--green)}
+.empty{padding:16px 14px;color:var(--faint);font-size:13px}
+
+/* Positionen */
+.pos{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:13px 14px}
+.card .top{display:flex;justify-content:space-between;align-items:baseline}
+.card .pair{font:700 15px var(--mono)}
+.card .pl{font:600 16px var(--mono)}
+.card .meta{display:flex;justify-content:space-between;color:var(--dim);font-size:12px;margin-top:6px}
+.track{position:relative;height:6px;background:var(--panel2);border-radius:6px;margin:14px 0 6px}
+.track .fill{position:absolute;top:0;bottom:0;border-radius:6px}
+.track .mk{position:absolute;top:-4px;width:2px;height:14px;border-radius:2px}
+.tags{display:flex;gap:6px;margin-top:8px}
+.tag{font:600 10px var(--mono);padding:2px 6px;border-radius:6px;background:var(--panel2);color:var(--dim)}
+.tag.on{color:var(--violet);background:rgba(167,139,250,.12)}
+
+/* Log */
+.log .row .p{min-width:auto}
+.side{font:700 10px var(--mono);padding:2px 6px;border-radius:5px;margin-right:8px}
+.side.b{background:rgba(61,220,132,.14);color:var(--green)}
+.side.s{background:rgba(255,93,93,.12);color:var(--red)}
+.t{color:var(--faint);font:12px var(--mono);white-space:nowrap}
+footer{margin-top:28px;color:var(--faint);font-size:11.5px;line-height:1.6}
+
+@media (max-width:640px){
+  .hero{grid-template-columns:1fr}
+  .hero .big{font-size:30px;white-space:nowrap}
+  .chg{font-size:13px}
+  .light{justify-content:flex-end;flex-direction:row-reverse}
+  #btc{text-align:left!important;margin-top:2px!important}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .belt{grid-template-columns:repeat(3,1fr)}
+  .belt:before{display:none}
+}
+
+/* Steuerung */
+.ctl{margin-top:10px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px}
+.ctl .line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0}
+.ctl .line+.line{border-top:1px solid var(--line)}
+.ctl .lbl{font-size:14px;font-weight:600}.ctl .hint{font-size:12px;color:var(--dim);margin-top:2px}
+.sw{position:relative;width:52px;height:30px;border-radius:99px;background:#2a323b;border:0;cursor:pointer;transition:background .2s;flex:none}
+.sw:after{content:"";position:absolute;top:3px;left:3px;width:24px;height:24px;border-radius:50%;background:#fff;transition:transform .2s}
+.sw.on{background:var(--green)}.sw.on:after{transform:translateX(22px)}
+.seg{display:flex;background:var(--panel2);border-radius:10px;padding:3px;flex:none}
+.seg button{border:0;background:none;color:var(--dim);font:600 13px var(--mono);padding:7px 14px;border-radius:8px;cursor:pointer}
+.seg button.act.p{background:rgba(90,169,255,.18);color:var(--blue)}.seg button.act.l{background:rgba(255,93,93,.18);color:var(--red)}
+.btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.btn{border:1px solid var(--line);background:var(--panel2);color:var(--text);font:600 13px var(--sans);padding:12px;border-radius:10px;cursor:pointer}
+.btn.danger{border-color:rgba(255,93,93,.4);color:var(--red);background:rgba(255,93,93,.08)}
+.btn:disabled{opacity:.5}
+.small{font-size:12px;color:var(--dim);margin-top:10px;line-height:1.5}
+.small a,.linkbtn{color:var(--blue);background:none;border:0;padding:0;font:inherit;cursor:pointer;text-decoration:underline}
+.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#1f262e;border:1px solid var(--line);color:var(--text);padding:11px 16px;border-radius:12px;font-size:13px;max-width:92vw;display:none;z-index:20;box-shadow:0 8px 30px rgba(0,0,0,.5)}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:10;padding:16px}
+.modal .box{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:18px;width:100%;max-width:400px}
+.modal h3{margin:0 0 6px;font-size:17px}.modal p{margin:0 0 12px;color:var(--dim);font-size:13px;line-height:1.5}
+.modal input{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:10px;padding:12px;font:15px var(--mono);margin-bottom:8px}
+.modal .row2{display:flex;gap:8px;margin-top:6px}.modal .row2 .btn{flex:1}
+.btn.pri{background:var(--blue);border-color:var(--blue);color:#05131f}
+.clog{font:11px var(--mono);color:var(--faint);margin-top:8px;white-space:pre-wrap;word-break:break-word}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><b>KRAKEN-DESK</b><span id="mode" class="badge paper">PAPER</span></div>
+    <div class="upd"><span class="pulse"></span><span id="upd">lädt …</span></div>
+  </header>
+
+  <section class="hero">
+    <div>
+      <div class="sub">Kontowert</div>
+      <div class="big num" id="eq">–</div>
+      <div class="chg" id="chg">–</div>
+    </div>
+    <div>
+      <div class="light"><span id="lightTxt">Marktampel</span><span id="light" class="dot r"></span></div>
+      <div class="sub num" id="btc" style="text-align:right;margin-top:6px"></div>
+      <div class="sub" id="liveInfo" style="text-align:right;margin-top:2px;font-size:11px;color:var(--green)"></div>
+    </div>
+    <svg id="spark" viewBox="0 0 300 70" preserveAspectRatio="none"></svg>
+    <div class="kpis">
+      <div class="kpi"><span>Cash</span><b id="cash">–</b></div>
+      <div class="kpi"><span>Offen</span><b id="open">–</b></div>
+      <div class="kpi"><span>Gebühren</span><b id="fees">–</b></div>
+      <div class="kpi"><span id="barLbl">Letzte Kerze</span><b id="bar">–</b></div>
+    </div>
+  </section>
+  <div class="alert" id="alert"></div>
+
+  <section class="ctl" id="ctl">
+    <div class="line"><div><div class="lbl">Bot</div><div class="hint" id="botHint">–</div></div><button class="sw" id="swBot" onclick="toggleBot()" aria-label="Bot an/aus"></button></div>
+    <div class="line"><div><div class="lbl">Modus</div><div class="hint" id="modeHint">–</div></div>
+      <div class="seg"><button id="bP" onclick="setMode('paper')">PAPER</button><button id="bL" onclick="setMode('live')">LIVE</button></div></div>
+    <div class="btns"><button class="btn" id="bTick" onclick="act('tick')">Jetzt prüfen</button><button class="btn danger" onclick="closeAll()">Notaus: alles verkaufen</button></div>
+    <div class="small"><span id="keyInfo"></span> · <button class="linkbtn" onclick="openSetup(true)">Keys/PIN ändern</button> · <button class="linkbtn" onclick="pullUpdate()">Update holen</button> <span id="ver"></span> · <button class="linkbtn" onclick="document.getElementById('upd_f').click()">Zip</button>
+      <input type="file" id="upd_f" accept=".zip" style="display:none" onchange="upload(this.files[0])"></div>
+    <div class="clog" id="clog"></div>
+  </section>
+
+  <h2 id="beltH">Fließband</h2>
+  <div class="belt" id="belt"></div>
+  <div class="detail" id="detail"></div>
+
+  <h2>Offene Positionen</h2>
+  <div class="pos" id="pos"></div>
+
+  <h2>Protokoll</h2>
+  <div class="detail log" id="log"></div>
+
+  <footer id="foot"></footer>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="modal" id="mSetup"><div class="box">
+  <h3 id="sTitle">Einrichtung</h3><p id="sText">Leg eine PIN fest (4–8 Ziffern). Mit ihr schaltest du den Bot. Die Kraken-Keys kannst du gleich mit eintragen oder später.</p>
+  <input id="sOld" type="password" inputmode="numeric" placeholder="aktuelle PIN" style="display:none">
+  <input id="sPin" type="password" inputmode="numeric" placeholder="neue PIN">
+  <input id="sPin2" type="password" inputmode="numeric" placeholder="neue PIN wiederholen">
+  <input id="sKey" placeholder="Kraken API-Key (optional)" autocomplete="off">
+  <input id="sSec" type="password" placeholder="Kraken API-Secret (optional)" autocomplete="off">
+  <input id="sGh" type="password" placeholder="GitHub-Token (nur bei privatem Repo)" autocomplete="off">
+  <div class="row2"><button class="btn" id="sCancel" onclick="closeM('mSetup')">Abbrechen</button><button class="btn pri" onclick="saveSetup()">Speichern</button></div>
+</div></div>
+<div class="modal" id="mPin"><div class="box">
+  <h3>PIN</h3><p id="pText">Zum Schalten bitte PIN eingeben.</p>
+  <input id="pIn" type="password" inputmode="numeric" placeholder="PIN" onkeydown="if(event.key==='Enter')pinOk()">
+  <div class="row2"><button class="btn" onclick="pinCancel()">Abbrechen</button><button class="btn pri" onclick="pinOk()">OK</button></div>
+</div></div>
+<script>
+const ST=[
+ {n:"Screener",d:"Umsatz, Volatilität, Cooldown"},
+ {n:"Kartograf",d:"Trend, Ausbruch, Volumen, RSI"},
+ {n:"Risiko-manager",d:"Größe, Slots, Limits"},
+ {n:"Gate",d:"Score, Spread, Mindestorder"},
+ {n:"Exit-Verwalter",d:"Stops & Trailing"},
+ {n:"Auditor",d:"Regel-Check & Logbuch"}];
+const SIGS=["trend","above_fast","breakout","volume_spike","rsi_ok","momentum","htf_trend"];
+let sel=1, last=null;
+const qs=new URLSearchParams(location.search);
+const eur=v=>(v==null?"–":v.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €");
+const px=v=>v==null?"–":(v>=1?v.toLocaleString("de-DE",{maximumFractionDigits:4}):Number(v).toPrecision(4));
+const tfmt=s=>{if(!s)return"–";const d=new Date(s.replace(" ","T"));return isNaN(d)?s:d.toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})};
+const ago=s=>{const m=Math.round((Date.now()-new Date(s))/60000);return m<1?"gerade eben":m<60?`vor ${m} Min.`:`vor ${Math.round(m/60)} Std.`};
+
+function groups(f){
+  const g={1:[],2:[],3:[],4:[],5:[],6:[]};
+  for(const [p,v] of Object.entries(f||{})){
+    if(v.station===0)continue;
+    if(v.station===6)g[5].push([p,v]); else g[v.station].push([p,v]);
+  }
+  return g;
+}
+function belt(s,ev){
+  const g=groups(s.funnel), el=document.getElementById("belt");
+  const viol=0;
+  el.innerHTML=ST.map((x,i)=>{
+    const k=i+1; let c, lb;
+    if(k===6){c=ev.filter(e=>e.type==="SELL").length; lb="Trades";}
+    else if(k===5){c=(s.positions||[]).length+g[5].filter(([,v])=>v.station===6).length; lb="im Depot";}
+    else {c=g[k].length; lb=(k===2&&s.engine==="watch")?"warten":"raus";}
+    const hot=(k===5&&c>0)||(k===6&&c>0);
+    return `<div class="st ${sel===k?"sel":""} ${hot?"hot":""}" onclick="pick(${k})">
+      <div class="ic">${k}</div><div class="nm">${x.n}</div><div class="ct num">${c}</div><div class="lb">${lb}</div></div>`;
+  }).join("");
+  const d=document.getElementById("detail");
+  const x=ST[sel-1];
+  let rows="";
+  if(sel===6){
+    const sells=ev.filter(e=>e.type==="SELL");
+    const pnl=sells.reduce((a,e)=>a+(e.pnl_eur||0),0), w=sells.filter(e=>e.pnl_eur>0).length;
+    rows=`<div class="row"><span class="p">Trades</span><span class="r">${sells.length} abgeschlossen, ${w} im Plus</span><span class="num ${pnl>=0?"up":"down"}">${pnl>=0?"+":""}${eur(pnl)}</span></div>
+      <div class="row"><span class="p">Regeln</span><span class="r">max. ${s.rules?.risk_pct}% Risiko/Trade · ${s.rules?.max_pos} Positionen · Score ≥ ${s.rules?.min_score}/${s.rules?.max_score||6} · Notaus bei −${s.rules?.dd_stop}%</span><span class="up">✓</span></div>`;
+  } else if(sel===5){
+    const list=[...(s.positions||[]).map(p=>[p.pair,{grund:`Stop ${px(p.stop)} · ${p.trailing?"Trailing aktiv":p.be?"Einstand gesichert":"Anfangs-Stop"}`}]),
+                ...groups(s.funnel)[5].filter(([,v])=>v.station===6)];
+    rows=list.length?list.map(([p,v])=>`<div class="row"><span class="p">${p.replace("EUR","")}</span><span class="r">${v.grund}</span></div>`).join(""):`<div class="empty">Gerade nichts im Depot.</div>`;
+  } else {
+    const g=groups(s.funnel)[sel];
+    rows=g.length?g.sort((a,b)=>a[0].localeCompare(b[0])).map(([p,v])=>`<div class="row"><span class="p">${p.replace("EUR","")}</span><span class="r">${v.grund}</span>
+      ${v.signale?`<span class="sig" title="Trend · über EMA · Ausbruch · Volumen · RSI ok · Momentum · 4h-Trend">${SIGS.map(k=>`<i class="${v.signale[k]?"on":""}"></i>`).join("")}</span>`:""}</div>`).join("")
+      :`<div class="empty">Kein Coin ist an dieser Station hängen geblieben.</div>`;
+  }
+  d.innerHTML=`<div class="hd"><b style="color:var(--text)">${sel} · ${x.n.replace("-","")}</b> — ${x.d}</div>${rows}`;
+}
+function pick(k){sel=k;if(last)belt(last.status,last.events)}
+
+function spark(eq){
+  const s=document.getElementById("spark");
+  if(eq.length<2){s.innerHTML=`<text x="150" y="40" fill="#56606a" font-size="11" text-anchor="middle">Kurve erscheint nach ein paar Läufen</text>`;return}
+  const v=eq.map(e=>e[1]),mn=Math.min(...v),mx=Math.max(...v),r=(mx-mn)||1;
+  const pts=v.map((y,i)=>`${(i/(v.length-1)*300).toFixed(1)},${(64-(y-mn)/r*58).toFixed(1)}`);
+  const col=v[v.length-1]>=v[0]?"#3ddc84":"#ff5d5d";
+  s.innerHTML=`<defs><linearGradient id="g" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${col}" stop-opacity=".28"/><stop offset="1" stop-color="${col}" stop-opacity="0"/></linearGradient></defs>
+    <polygon points="0,70 ${pts.join(" ")} 300,70" fill="url(#g)"/><polyline points="${pts.join(" ")}" fill="none" stroke="${col}" stroke-width="1.8" vector-effect="non-scaling-stroke"/>`;
+}
+let LP=null;
+const liveNow=p=>{const q=LP?.px?.[p.pair];return q?(q.bid||q.last):p.now};
+function liveEquity(s){const ps=s.positions||[];if(!LP||!ps.length)return s.equity;
+  return (s.cash||0)+ps.reduce((a,p)=>a+p.qty*liveNow(p),0)}
+function renderTop(s){
+  const eq=liveEquity(s);
+  document.getElementById("eq").textContent=eur(eq);
+  const ch=s.start_equity?(eq/s.start_equity-1)*100:0, ce=document.getElementById("chg");
+  ce.textContent=`${ch>=0?"+":""}${ch.toFixed(2)}% seit Start (${eur(s.start_equity)})`; ce.className="chg "+(ch>=0?"up":"down");
+  const b=LP?.px?.XBTEUR?.last??s.regime?.btc;
+  document.getElementById("btc").textContent=s.regime?`BTC ${eur(b)} · EMA ${eur(s.regime.ema)}`:"";
+  const lv=document.getElementById("liveInfo");
+  if(lv)lv.textContent=LP?`Kurse live · ${new Date(LP.t*1000).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`:"";
+}
+async function liveTick(){
+  try{const r=await fetch("/api/live"+(qs.get("mode")?`?mode=${qs.get("mode")}`:""),{cache:"no-store"});
+    const d=await r.json(); if(!d.ok)return; LP=d;
+    if(last){const s=last.status||{}; renderTop(s); positions(s.positions||[])}
+  }catch(e){}
+}
+function positions(ps){
+  const el=document.getElementById("pos");
+  if(!ps.length){el.innerHTML=`<div class="card" style="color:var(--faint);font-size:13px">Keine offenen Positionen. Der Desk wartet auf ein sauberes Setup.</div>`;return}
+  el.innerHTML=ps.map(p0=>{
+    const now=liveNow(p0), p={...p0,now,pnl_pct:(now/p0.entry-1)*100}, pe=p.qty*now-p.eur, dst=(now/p.stop-1)*100;
+    const lo=Math.min(p.stop,p.entry,p.now)*0.98, hi=Math.max(p.entry,p.now)*1.04, R=hi-lo;
+    const pos=v=>((v-lo)/R*100).toFixed(1)+"%";
+    const up=p.now>=p.entry;
+    return `<div class="card"><div class="top"><span class="pair">${p.pair.replace("EUR","")}</span><span class="pl ${up?"up":"down"}">${up?"+":""}${p.pnl_pct.toFixed(2)}% · ${pe>=0?"+":""}${eur(pe)}</span></div>
+      <div class="track"><div class="fill" style="left:${pos(Math.min(p.entry,p.now))};width:calc(${pos(Math.max(p.entry,p.now))} - ${pos(Math.min(p.entry,p.now))});background:${up?"rgba(61,220,132,.5)":"rgba(255,93,93,.5)"}"></div>
+        <div class="mk" style="left:${pos(p.stop)};background:var(--red)" title="Stop"></div>
+        <div class="mk" style="left:${pos(p.entry)};background:var(--dim)" title="Einstieg"></div>
+        <div class="mk" style="left:${pos(p.now)};background:var(--text)" title="jetzt"></div></div>
+      <div class="meta num"><span>Stop ${px(p.stop)}</span><span>Ein ${px(p.entry)}</span><span>Jetzt ${px(p.now)}</span></div>
+      <div class="meta"><span>${eur(p.eur)} seit ${tfmt(p.entry_time)}</span><span class="${dst<3?"down":""}">${dst.toFixed(1)}% bis Stop</span></div>
+      <div class="tags"><span class="tag ${p.be?"on":""}">EINSTAND</span><span class="tag ${p.trailing?"on":""}">TRAILING</span></div></div>`}).join("");
+}
+function log(ev){
+  const el=document.getElementById("log");
+  if(!ev.length){el.innerHTML=`<div class="empty">Noch keine Käufe oder Verkäufe.</div>`;return}
+  el.innerHTML=[...ev].reverse().slice(0,40).map(e=>e.type==="BUY"
+    ?`<div class="row"><span><span class="side b">KAUF</span><span class="p">${e.pair.replace("EUR","")}</span></span><span class="r num">${eur(e.eur)} @ ${px(e.price)} · Score ${e.score}/6</span><span class="t">${tfmt(e.t)}</span></div>`
+    :`<div class="row"><span><span class="side s">VERK.</span><span class="p">${e.pair.replace("EUR","")}</span></span><span class="r">${e.reason}</span><span class="num ${e.pnl_eur>=0?"up":"down"}">${e.pnl_eur>=0?"+":""}${eur(e.pnl_eur)}</span></div>`).join("");
+}
+
+// ---------- Steuerung ----------
+let CTL={}, pinWait=null;
+const ss={get(){try{return sessionStorage.getItem("pin")||""}catch(e){return ""}},set(v){try{v?sessionStorage.setItem("pin",v):sessionStorage.removeItem("pin")}catch(e){}}};
+function toast(m,ms=3500){const t=document.getElementById("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",ms)}
+function openM(id){document.getElementById(id).style.display="flex"}
+function closeM(id){document.getElementById(id).style.display="none"}
+function getPin(text){const p=ss.get();if(p)return Promise.resolve(p);
+  document.getElementById("pText").textContent=text||"Zum Schalten bitte PIN eingeben.";document.getElementById("pIn").value="";openM("mPin");
+  setTimeout(()=>document.getElementById("pIn").focus(),50);return new Promise(r=>pinWait=r)}
+function pinOk(){const v=document.getElementById("pIn").value;closeM("mPin");if(pinWait){pinWait(v);pinWait=null}}
+function pinCancel(){closeM("mPin");if(pinWait){pinWait(null);pinWait=null}}
+async function post(url,body,headers={}){const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json",...headers},body});
+  let j={};try{j=await r.json()}catch(e){};return {ok:r.ok,...j}}
+async function act(a,extra){const pin=await getPin();if(!pin)return;
+  const r=await post("/api/control",JSON.stringify({pin,action:a}));
+  if(r.ok)ss.set(pin);else if(/PIN/.test(r.msg||""))ss.set("");
+  toast(r.msg||"?");setTimeout(load,1500);setTimeout(load,8000)}
+function toggleBot(){act(CTL.enabled?"off":"on")}
+function setMode(m){if(m===CTL.mode)return;
+  if(m==="live"&&!confirm("Auf LIVE schalten?\nAb jetzt handelt der Bot mit echtem Geld auf deinem Kraken-Konto."))return;act(m)}
+function closeAll(){if(!confirm(`Notaus im Modus ${CTL.mode.toUpperCase()}:\nAlle offenen Positionen sofort zum Marktpreis verkaufen und den Bot ausschalten?`))return;act("closeall")}
+function openSetup(change){const first=!CTL.pin_set;
+  document.getElementById("sTitle").textContent=first?"Willkommen – Einrichtung":"Keys / PIN ändern";
+  document.getElementById("sText").textContent=first?"Leg eine PIN fest (4–8 Ziffern). Mit ihr schaltest du den Bot. Die Kraken-Keys kannst du gleich mit eintragen oder später.":"Aktuelle PIN eingeben. Felder, die du leer lässt, bleiben wie sie sind.";
+  document.getElementById("sOld").style.display=first?"none":"block";
+  document.getElementById("sCancel").style.display=first?"none":"block";
+  ["sOld","sPin","sPin2","sKey","sSec","sGh"].forEach(i=>document.getElementById(i).value="");openM("mSetup")}
+async function saveSetup(){const g=i=>document.getElementById(i).value.trim();
+  if(g("sPin")!==g("sPin2"))return toast("Die PINs stimmen nicht überein.");
+  if(!CTL.pin_set&&!g("sPin"))return toast("Bitte eine PIN festlegen.");
+  const body=CTL.pin_set?{pin:g("sOld"),new_pin:g("sPin")||undefined,key:g("sKey"),secret:g("sSec"),gh_token:g("sGh")}:{pin:g("sPin"),key:g("sKey"),secret:g("sSec"),gh_token:g("sGh")};
+  toast("Speichere …");const r=await post("/api/setup",JSON.stringify(body));toast(r.msg||"?",5000);
+  if(r.ok){ss.set(g("sPin")||g("sOld"));closeM("mSetup");load()}}
+async function upload(f){if(!f)return;const pin=await getPin("PIN für das Update:");if(!pin)return;
+  toast("Update wird eingespielt …");const r=await fetch("/api/update",{method:"POST",headers:{"X-PIN":pin},body:f});
+  let j={};try{j=await r.json()}catch(e){};toast(j.msg||"?",6000);document.getElementById("upd_f").value="";
+  if(r.ok){ss.set(pin);setTimeout(()=>location.reload(),4000)}}
+async function pullUpdate(){const pin=await getPin("PIN für das Update:");if(!pin)return;
+  toast("Hole neueste Version von GitHub …",8000);
+  const r=await post("/api/update_pull",JSON.stringify({pin}));
+  if(r.ok)ss.set(pin);else if(/PIN/.test(r.msg||""))ss.set("");
+  toast(r.msg||"?",7000); if(r.ok&&/startet neu/.test(r.msg||""))setTimeout(()=>location.reload(),4000)}
+function renderCtl(c){CTL=c||{};
+  const sw=document.getElementById("swBot");sw.className="sw"+(c.enabled?" on":"");
+  document.getElementById("botHint").textContent=c.busy?"arbeitet gerade …":(c.enabled?"an – prüft automatisch alle 4 Stunden":"aus – keine neuen Käufe (Börsen-Stops bleiben aktiv)");
+  document.getElementById("bP").className=c.mode==="paper"?"act p":"";document.getElementById("bL").className=c.mode==="live"?"act l":"";
+  document.getElementById("modeHint").textContent=c.mode==="live"?"echtes Geld auf Kraken":"Spielgeld, echte Kurse";
+  document.getElementById("keyInfo").textContent=c.keys_set?"Kraken verbunden":"⚠ noch keine Kraken-Keys";
+  {const v=document.getElementById("ver");const nv=c.latest&&c.latest!==c.version;
+   v.textContent=(c.version&&c.version!=="?"?`(Version ${c.version})`:"")+(nv?` · neu: ${c.latest}`:"");
+   v.style.color=nv?"var(--green)":"";v.title=c.gh_err||""}
+  document.getElementById("bTick").disabled=!!c.busy;
+  const rl=(c.runlog||[]), bad=rl.some(l=>/Traceback|Error|Fehler|error/.test(l));
+  document.getElementById("clog").textContent=[...(c.log||[]).slice(-3),...(bad?["Letzter Lauf:",...rl.slice(-3)]:[])].join("\n");
+  document.getElementById("clog").style.color=bad||(c.log||[]).some(l=>/FEHLER/.test(l))?"var(--red)":"";
+  if(!c.pin_set&&document.getElementById("mSetup").style.display!=="flex")openSetup(false)}
+async function load(){
+  try{
+    const r=await fetch("/api/status"+(qs.get("mode")?`?mode=${qs.get("mode")}`:""),{cache:"no-store"});
+    const d=await r.json(); last=d; const s=d.status||{}; renderCtl(d.control);
+    const m=document.getElementById("mode"); const mm=s.mode||d.control?.mode||"paper"; m.textContent=mm.toUpperCase(); m.className="badge "+mm;
+    document.getElementById("upd").textContent=s.updated?`Lauf ${ago(s.updated)}`:"noch kein Lauf";
+    renderTop(s);
+    const g=s.regime?.green; document.getElementById("light").className="dot "+(g?"g":"r");
+    document.getElementById("lightTxt").textContent=g?"Marktampel grün":"Marktampel rot";
+    document.getElementById("cash").textContent=eur(s.cash);
+    document.getElementById("open").textContent=`${(s.positions||[]).length} / ${s.rules?.max_pos??"–"}`;
+    document.getElementById("fees").textContent=eur(s.fees_paid);
+    document.getElementById("bar").textContent=s.engine==="watch"?new Date(s.updated).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}):tfmt(s.last_bar);
+    document.getElementById("barLbl").textContent=s.engine==="watch"?"Letzter Check":"Letzte Kerze";
+    const a=document.getElementById("alert");
+    a.style.display=(s.halted||s.halted_day)?"block":"none";
+    a.textContent=s.halted?"Notaus: maximaler Drawdown erreicht – keine neuen Trades.":"Tageslimit erreicht – heute keine neuen Trades.";
+    spark(d.equity||[]); belt(s,d.events||[]); positions(s.positions||[]); log(d.events||[]);
+    document.getElementById("foot").innerHTML=(s.engine==="watch"?`Dauer-Überwachung: Kurse jede Minute, Kauf im Moment des Ausbruchs, Stops laufend nachgezogen.`:`Der Desk läuft alle ${s.timeframe_min/60||4} Stunden kurz nach Kerzenschluss.`)+` Kurse und offene Positionen aktualisieren sich alle 20 Sekunden live.${(d.modes||[]).length>1?` · <a style="color:var(--blue)" href="?mode=${s.mode==="live"?"paper":"live"}">zu ${s.mode==="live"?"Paper":"Live"} wechseln</a>`:""}`;
+  }catch(e){document.getElementById("upd").textContent="keine Verbindung"}
+}
+load().then(liveTick); setInterval(load,30000); setInterval(liveTick,20000);
+</script>
+</body>
+</html>

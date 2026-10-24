@@ -1,0 +1,104 @@
+# ============================================================
+#  KRAKEN-DESK — die eine Regeldatei, die alle 6 Stufen lesen
+#  Fließband: Screener -> Kartograf -> Risikomanager -> Gate -> Exit-Verwalter -> Auditor
+#  Alle Längenangaben in Kerzen (bars). timeframe_minutes legt die Kerzengröße fest.
+# ============================================================
+
+account:
+  start_capital_eur: 146          # Startkapital Paper (= Kraken-Guthaben 24.10.)
+  quote: EUR
+
+timeframe_minutes: 240            # 4h-Kerzen (1h getestet: Gebühren fressen alles)
+
+# Handelbare Coins: automatisch die umsatzstärksten EUR-Paare bei Kraken
+# (täglich neu, ohne Stablecoins/Fiat/Gold). Feste Liste statt "auto" geht auch.
+universe: auto
+universe_auto:
+  top_n: 40
+  min_volume_eur_24h: 150000      # mind. 150.000 € Umsatz in 24h
+  include_btc: true
+  exclude: []                     # z. B. [XMR] um einzelne Coins auszuschließen
+
+costs:
+  fee_pct: 0.40                   # Kraken Taker-Gebühr bei kleinem Volumen
+  slippage_pct: 0.20              # Meme-Coins sind dünn – Schlupf pro Seite
+
+# --- Stufe 1: SCREENER – wer darf überhaupt aufs Band? -------------------
+screener:
+  min_bars: 80                    # genug Historie für Indikatoren
+  min_volume_eur_24h: 75000       # Mindestumsatz der letzten 24h in EUR
+  atr_pct_min: 1.2                # zu tot -> raus (ATR in % des Kurses, pro Kerze)
+  atr_pct_max: 12.0               # zu wild -> raus
+
+# --- Stufe 2: KARTOGRAF – wo steht der Coin? ------------------------------
+cartographer:
+  ema_fast: 20
+  ema_slow: 50
+  breakout_lookback: 6            # Schlusskurs über dem Hoch der letzten 6 Kerzen (= 24h)
+  volume_lookback: 6
+  volume_mult: 1.5                # Volumen-Spike gegenüber Schnitt
+  rsi_period: 14
+  rsi_max: 82                     # komplett überhitzt -> kein Einstieg
+  roc_period: 6
+  required: [trend, breakout]     # Pflichtsignale
+  # Punkte: trend, above_fast, breakout, volume_spike, rsi_ok, momentum (je 1)
+
+  # Marktampel (streng): neue Käufe nur, wenn Bitcoin über seinem 200-Tage-Schnitt
+  # (EMA auf Tageskerzen) steht. 12-Monats-Test: −2 % statt −24 % mit lockerer Ampel.
+  regime_pair: XXBTZEUR
+  regime_ema: 200                 # in TAGEN
+  regime_enabled: true
+
+# --- Stufe 3: RISIKOMANAGER – wie viel darf rein? -------------------------
+risk:
+  risk_per_trade_pct: 1.5         # max. Verlust pro Trade in % vom Konto (bei Stop)
+  max_position_pct: 25            # max. Positionsgröße in % vom Konto
+  max_open_positions: 3
+  max_total_exposure_pct: 75
+  daily_loss_limit_pct: 6         # Tagesverlust erreicht -> keine neuen Trades heute
+  max_drawdown_pct: 30            # Drawdown vom Hoch -> Desk schließt komplett
+  cooldown_bars_after_loss: 3     # nach Verlust-Trade Coin 12h sperren
+
+# --- Stufe 4: GATE – letzte Kontrolle vor der Order -----------------------
+gate:
+  min_score: 4                    # von 6 Punkten
+  max_spread_pct: 0.6             # nur live/paper relevant
+  min_order_eur: 10
+
+# --- Stufe 5: EXIT-VERWALTER ----------------------------------------------
+exits:
+  atr_period: 14
+  stop_atr: 2.0                   # Anfangsstop = Einstieg - 2 ATR
+  breakeven_at_r: 1.0             # ab +1R Stop auf Einstand
+  trail_activate_r: 1.5           # ab +1.5R Trailing-Stop
+  trail_atr: 2.5                  # Trailing = Hoch seit Einstieg - 2.5 ATR
+  time_stop_bars: 12              # nach 2 Tagen ohne +1R raus
+
+# --- DAUER-ÜBERWACHUNG (run_watch.py) --------------------------------------
+# Kein fester Takt: Kurse jede Minute, Kauf im Moment des Ausbruchs,
+# Stops werden laufend nachgezogen. Setups (Trend, ATR …) aus 1h-Kerzen.
+watch:
+  poll_seconds: 60
+  setup_timeframe: 60             # Kerzen für Trend/ATR/Ausbruchsniveau
+  htf_minutes: 240                # übergeordneter Trend aus 4h-Kerzen
+  htf_ema: 50
+  breakout_lookback: 24           # Ausbruch über das Hoch der letzten 24h
+  volume_mult: 2.0                # hochgerechnetes Stundenvolumen ≥ 2x Schnitt
+  min_minutes_into_bar: 10        # Volumen erst nach 10 Min. hochrechnen
+  min_score: 6                    # von 7 (trend, über EMA, Ausbruch, Volumen, RSI, Momentum, 4h-Trend)
+  required: [trend, breakout, htf_trend]
+  stop_atr: 2.5
+  breakeven_at_r: 1.0
+  trail_activate_r: 1.5
+  trail_atr: 3.0
+  time_stop_hours: 24
+  cooldown_hours: 12
+  exchange_stop_step_pct: 0.5     # Börsen-Stop erst ab 0,5 % Bewegung ersetzen
+
+# --- Stufe 6: AUDITOR -----------------------------------------------------
+auditor:
+  log_dir: logs
+
+# --- Live-Schalter ---------------------------------------------------------
+live:
+  enabled: false                  # erst auf true, wenn Paper überzeugt
