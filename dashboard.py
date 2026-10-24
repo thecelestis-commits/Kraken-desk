@@ -201,7 +201,7 @@ def busy():
 
 
 # ---------------------------------------------------------------- Updates von GitHub
-GH_REPO = "thecelestis-commits/kraken-desk"
+GH_REPO = "thecelestis-commits/Kraken-desk"
 GH_BRANCH = "main"
 GH_TOKEN_FILE = os.path.join(HERE, ".github_token")
 GH_CACHE = {"t": 0.0, "latest": None, "err": None}

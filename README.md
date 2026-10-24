@@ -25,7 +25,7 @@ Ausgehend braucht die VM nur HTTPS zu `api.kraken.com`. Eingehend nichts.
 - **Ersteinrichtung:** PIN festlegen, Kraken-Key und -Secret eintragen (werden sofort geprüft)
 - **Bot an/aus**, **Paper/Live**, **Jetzt prüfen**
 - **Notaus:** alle Positionen sofort verkaufen, Bot aus
-- **Update holen:** zieht die neueste Version aus GitHub (`thecelestis-commits/kraken-desk`, Branch `main`).
+- **Update holen:** zieht die neueste Version aus GitHub (`thecelestis-commits/Kraken-desk`, Branch `main`).
   Bei privatem Repo einmal unter „Keys/PIN ändern" einen GitHub-Token (nur Lesezugriff auf dieses Repo) eintragen.
 - **Zip:** alternativ eine Update-Zip von Hand hochladen – Keys, PIN, Modus und Kontostand bleiben immer erhalten
 
