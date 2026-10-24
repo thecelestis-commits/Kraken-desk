@@ -208,13 +208,18 @@ GH_CACHE = {"t": 0.0, "latest": None, "err": None}
 
 
 def _gh_get(url_public, url_api, accept):
+    """Erst öffentlich versuchen, dann mit Token (für private Repos)."""
     import urllib.request
-    tok = read(GH_TOKEN_FILE)
-    if tok:
-        req = urllib.request.Request(url_api, headers={"Authorization": f"Bearer {tok}", "Accept": accept,
-                                                       "User-Agent": "kraken-desk"})
-    else:
+    try:
         req = urllib.request.Request(url_public, headers={"User-Agent": "kraken-desk"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            return r.read()
+    except Exception:  # noqa: BLE001
+        tok = read(GH_TOKEN_FILE)
+        if not tok:
+            raise
+    req = urllib.request.Request(url_api, headers={"Authorization": f"Bearer {tok}", "Accept": accept,
+                                                   "User-Agent": "kraken-desk"})
     with urllib.request.urlopen(req, timeout=30) as r:
         return r.read()
 
