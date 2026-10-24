@@ -13,6 +13,7 @@ class SimBroker:
 
     def __init__(self, R):
         self.fee = R["costs"]["fee_pct"] / 100
+        self.fee_sell = R["costs"].get("fee_sell_pct", R["costs"]["fee_pct"]) / 100
         self.slip = R["costs"]["slippage_pct"] / 100
 
     def buy(self, pair, qty, ref_price):
@@ -23,7 +24,7 @@ class SimBroker:
     def sell(self, pos, ref_price):
         px = ref_price * (1 - self.slip)
         gross = pos.qty * px
-        return {"price": px, "proceeds": gross, "fee": gross * self.fee}
+        return {"price": px, "proceeds": gross, "fee": gross * self.fee_sell}
 
     # Hooks für Live – im Sim nichts zu tun
     def on_stop_moved(self, pos):

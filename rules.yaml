@@ -20,7 +20,8 @@ universe_auto:
   exclude: []                     # z. B. [XMR] um einzelne Coins auszuschließen
 
 costs:
-  fee_pct: 0.40                   # Kraken Taker-Gebühr bei kleinem Volumen
+  fee_pct: 0.40                   # Kauf: Kraken Maker-Gebühr Stufe 1 (post-only Limit)
+  fee_sell_pct: 0.80              # Verkauf: Stops laufen als Taker – Kraken Stufe 1 (< 2.500 $ Monatsvolumen)
   slippage_pct: 0.20              # Meme-Coins sind dünn – Schlupf pro Seite
 
 # --- Stufe 1: SCREENER – wer darf überhaupt aufs Band? -------------------
