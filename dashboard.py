@@ -228,7 +228,11 @@ def gh_latest(force=False):
                     "application/vnd.github.raw").decode().strip()
         GH_CACHE.update(t=time.time(), latest=v, err=None)
     except Exception as e:  # noqa: BLE001
-        msg = "Repository nicht erreichbar (privat? dann GitHub-Token eintragen)" if "404" in str(e) else str(e)
+        if "404" in str(e) or "401" in str(e) or "403" in str(e):
+            msg = ("Token hat keinen Lesezugriff aufs Repo (Contents: Read)" if read(GH_TOKEN_FILE)
+                   else "Repository nicht erreichbar (privat? dann GitHub-Token eintragen)")
+        else:
+            msg = str(e)
         GH_CACHE.update(t=time.time(), latest=None, err=msg)
     return GH_CACHE["latest"], GH_CACHE["err"]
 
