@@ -23,9 +23,9 @@ case "${1:-status}" in
     loadenv; locked; mkdir -p logs
     { echo "--- $(date -u '+%d.%m %H:%M') UTC Lauf ($MODE, $STRAT)"; "$PY" $RUNNER $LIVEFLAG 2>&1; } | tee -a logs/run.log | tail -20 ;;
   closeall)
+    echo off > "$DIR/enabled"            # zuerst ausschalten – auch wenn der Verkauf scheitert
     loadenv; locked; mkdir -p logs
-    { echo "--- $(date -u '+%d.%m %H:%M') UTC NOTAUS ($MODE, $STRAT)"; "$PY" $RUNNER $LIVEFLAG --close-all 2>&1; } | tee -a logs/run.log | tail -20
-    echo off > "$DIR/enabled" ;;
+    { echo "--- $(date -u '+%d.%m %H:%M') UTC NOTAUS ($MODE, $STRAT)"; "$PY" $RUNNER $LIVEFLAG --close-all 2>&1; } | tee -a logs/run.log | tail -20 ;;
   on)    echo on  > "$DIR/enabled"; echo "Bot an." ;;
   trend)  echo trend > "$DIR/strategy"; echo "Strategie: Trend-Desk (BTC+ETH, Tagestrend)." ;;
   fliessband) echo fliessband > "$DIR/strategy"; echo "Strategie: Fließband (alte Version)." ;;
