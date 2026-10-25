@@ -64,6 +64,14 @@ def equity(p, n=500):
     return out
 
 
+def strategy():
+    return read(os.path.join(HERE, "strategy"), "trend")
+
+
+def pfx():
+    return "trend_" if strategy() == "trend" else ""
+
+
 def control_log(msg):
     with open(os.path.join(LOG, "control.log"), "a") as f:
         f.write(f"{time.strftime('%d.%m %H:%M:%S')} {msg}\n")
@@ -303,11 +311,12 @@ class H(BaseHTTPRequestHandler):
             mode = q.get("mode", [cur])[0]
             mode = mode if mode in ("live", "paper") else cur
             return self._json(200, {
-                "status": read_json(os.path.join(LOG, f"status_{mode}.json"), {}),
-                "events": tail_jsonl(os.path.join(LOG, f"{mode}_events.jsonl")),
-                "equity": equity(os.path.join(LOG, f"{mode}_equity.csv")),
-                "modes": [m for m in ("live", "paper") if os.path.exists(os.path.join(LOG, f"status_{m}.json"))],
+                "status": read_json(os.path.join(LOG, f"status_{pfx()}{mode}.json"), {}),
+                "events": tail_jsonl(os.path.join(LOG, f"{pfx()}{mode}_events.jsonl")),
+                "equity": equity(os.path.join(LOG, f"{pfx()}{mode}_equity.csv")),
+                "modes": [m for m in ("live", "paper") if os.path.exists(os.path.join(LOG, f"status_{pfx()}{m}.json"))],
                 "control": {"mode": cur, "viewing": mode, "enabled": read(os.path.join(HERE, "enabled"), "on") == "on",
+                            "strategy": strategy(),
                             "pin_set": pin_set(), "keys_set": os.path.exists(ENV_FILE), "busy": busy(),
                             "version": read(os.path.join(HERE, "VERSION"), "?"),
                             "latest": gh_latest()[0], "gh_err": gh_latest()[1],
@@ -318,7 +327,7 @@ class H(BaseHTTPRequestHandler):
             cur = read(os.path.join(HERE, "mode"), "paper")
             mode = q.get("mode", [cur])[0]
             mode = mode if mode in ("live", "paper") else cur
-            st = read_json(os.path.join(LOG, f"status_{mode}.json"), {}) or {}
+            st = read_json(os.path.join(LOG, f"status_{pfx()}{mode}.json"), {}) or {}
             try:
                 return self._json(200, {"ok": True, **live_prices([p["pair"] for p in st.get("positions", [])])})
             except Exception as e:  # noqa: BLE001
@@ -394,10 +403,10 @@ class H(BaseHTTPRequestHandler):
                 act = d.get("action")
                 if act == "live" and not os.path.exists(ENV_FILE):
                     return self._json(400, {"ok": False, "msg": "Erst Kraken-Keys eintragen."})
-                if act in ("on", "off", "live", "paper"):
+                if act in ("on", "off", "live", "paper", "trend", "fliessband"):
                     r = subprocess.run([os.path.join(HERE, "desk.sh"), act], cwd=HERE, capture_output=True, text=True)
                     control_log(f"{act}: {r.stdout.strip()}")
-                    if act in ("live", "paper"):
+                    if act in ("live", "paper", "trend", "fliessband"):
                         run_bg("tick")          # gleich einen Lauf im neuen Modus, damit das Dashboard Daten hat
                     return self._json(200, {"ok": True, "msg": r.stdout.strip()})
                 if act in ("tick", "closeall"):

@@ -1,4 +1,14 @@
-# Kraken-Desk – Bot mit 6-Stufen-Fließband
+# Kraken-Desk
+
+**Standard-Strategie seit 25.10.2026: TREND-DESK** (`run_trend.py`, Regeln unter `trend:` in rules.yaml).
+BTC und ETH je 50 %. Täglich nach Tagesschluss: kaufen, wenn Schluss > 50-Tage-Schnitt +2 %,
+verkaufen, wenn Schluss < 50-Tage-Schnitt −2 %. Kauf/Verkauf per Maker-Limit.
+Getestet 2020–2026 (Binance-EUR, unabhängig nachgerechnet): +1.685 % bei max. −44 % Rückgang
+(Halten: +901 %, −75 %); 1.000 Zufallsstrategien mit gleicher Investitionsquote: nur 0,6 % besser.
+Verworfen nach Tests (alle nach Gebühren negativ): Altcoins, 1h/4h-Signale, Ausbruchs-Fließband,
+Querschnitts-Rotation, Mean-Reversion, ADX/Regime-Filter. Umschalten im Dashboard (TREND / ALT).
+
+## Alte Strategie: 6-Stufen-Fließband
 
 Screener → Kartograf → Risikomanager → Gate → Exit-Verwalter → Auditor.
 Alle Stufen lesen **eine** Regeldatei: `rules.yaml`.

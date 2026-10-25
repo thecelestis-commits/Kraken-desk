@@ -159,12 +159,16 @@ footer{margin-top:28px;color:var(--faint);font-size:11.5px;line-height:1.6}
     <div class="line"><div><div class="lbl">Bot</div><div class="hint" id="botHint">–</div></div><button class="sw" id="swBot" onclick="toggleBot()" aria-label="Bot an/aus"></button></div>
     <div class="line"><div><div class="lbl">Modus</div><div class="hint" id="modeHint">–</div></div>
       <div class="seg"><button id="bP" onclick="setMode('paper')">PAPER</button><button id="bL" onclick="setMode('live')">LIVE</button></div></div>
+    <div class="line"><div><div class="lbl">Strategie</div><div class="hint" id="stratHint">–</div></div>
+      <div class="seg"><button id="bT" onclick="setStrat('trend')">TREND</button><button id="bF" onclick="setStrat('fliessband')">ALT</button></div></div>
     <div class="btns"><button class="btn" id="bTick" onclick="act('tick')">Jetzt prüfen</button><button class="btn danger" onclick="closeAll()">Notaus: alles verkaufen</button></div>
     <div class="small"><span id="keyInfo"></span> · <button class="linkbtn" onclick="openSetup(true)">Keys/PIN ändern</button> · <button class="linkbtn" onclick="pullUpdate()">Update holen</button> <span id="ver"></span> · <button class="linkbtn" onclick="document.getElementById('upd_f').click()">Zip</button>
       <input type="file" id="upd_f" accept=".zip" style="display:none" onchange="upload(this.files[0])"></div>
     <div class="clog" id="clog"></div>
   </section>
 
+  <h2 id="sigH" style="display:none">Signale</h2>
+  <div class="detail" id="sigs" style="display:none"></div>
   <h2 id="beltH">Fließband</h2>
   <div class="belt" id="belt"></div>
   <div class="detail" id="detail"></div>
@@ -206,6 +210,7 @@ const SIGS=["trend","above_fast","breakout","volume_spike","rsi_ok","momentum","
 let sel=1, last=null;
 const qs=new URLSearchParams(location.search);
 const eur=v=>(v==null?"–":v.toLocaleString("de-DE",{minimumFractionDigits:2,maximumFractionDigits:2})+" €");
+const eur0=v=>v==null?"–":(v>=100?Math.round(v).toLocaleString("de-DE"):v.toLocaleString("de-DE",{maximumFractionDigits:2}))+" €";
 const px=v=>v==null?"–":(v>=1?v.toLocaleString("de-DE",{maximumFractionDigits:4}):Number(v).toPrecision(4));
 const tfmt=s=>{if(!s)return"–";const d=new Date(s.replace(" ","T"));return isNaN(d)?s:d.toLocaleString("de-DE",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"})};
 const ago=s=>{const m=Math.round((Date.now()-new Date(s))/60000);return m<1?"gerade eben":m<60?`vor ${m} Min.`:`vor ${Math.round(m/60)} Std.`};
@@ -271,7 +276,7 @@ function renderTop(s){
   const ch=s.start_equity?(eq/s.start_equity-1)*100:0, ce=document.getElementById("chg");
   ce.textContent=`${ch>=0?"+":""}${ch.toFixed(2)}% seit Start (${eur(s.start_equity)})`; ce.className="chg "+(ch>=0?"up":"down");
   const b=LP?.px?.XBTEUR?.last??s.regime?.btc;
-  document.getElementById("btc").textContent=s.regime?`BTC ${eur(b)} · EMA ${eur(s.regime.ema)}`:"";
+  document.getElementById("btc").textContent=s.regime?`BTC ${eur(b)} · ${s.engine==="trend"?"Schnitt50":"EMA"} ${eur(s.regime.ema)}`:"";
   const lv=document.getElementById("liveInfo");
   if(lv)lv.textContent=LP?`Kurse live · ${new Date(LP.t*1000).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit",second:"2-digit"})}`:"";
 }
@@ -302,7 +307,7 @@ function log(ev){
   const el=document.getElementById("log");
   if(!ev.length){el.innerHTML=`<div class="empty">Noch keine Käufe oder Verkäufe.</div>`;return}
   el.innerHTML=[...ev].reverse().slice(0,40).map(e=>e.type==="BUY"
-    ?`<div class="row"><span><span class="side b">KAUF</span><span class="p">${e.pair.replace("EUR","")}</span></span><span class="r num">${eur(e.eur)} @ ${px(e.price)} · Score ${e.score}/6</span><span class="t">${tfmt(e.t)}</span></div>`
+    ?`<div class="row"><span><span class="side b">KAUF</span><span class="p">${e.pair.replace("EUR","")}</span></span><span class="r num">${eur(e.eur)} @ ${px(e.price)} · ${e.score==="Trend"?"Trend-Signal":`Score ${e.score}/6`}</span><span class="t">${tfmt(e.t)}</span></div>`
     :`<div class="row"><span><span class="side s">VERK.</span><span class="p">${e.pair.replace("EUR","")}</span></span><span class="r">${e.reason}</span><span class="num ${e.pnl_eur>=0?"up":"down"}">${e.pnl_eur>=0?"+":""}${eur(e.pnl_eur)}</span></div>`).join("");
 }
 
@@ -348,7 +353,11 @@ async function pullUpdate(){const pin=await getPin("PIN für das Update:");if(!p
   const r=await post("/api/update_pull",JSON.stringify({pin}));
   if(r.ok)ss.set(pin);else if(/PIN/.test(r.msg||""))ss.set("");
   toast(r.msg||"?",7000); if(r.ok&&/startet neu/.test(r.msg||""))setTimeout(()=>location.reload(),4000)}
+function setStrat(x){if(x===CTL.strategy)return;
+  if(!confirm(x==="trend"?"Auf TREND-DESK umstellen (BTC+ETH, Tagestrend)?":"Zurück zur alten Fließband-Strategie?"))return;act(x)}
 function renderCtl(c){CTL=c||{};
+  document.getElementById("bT").className=c.strategy==="trend"?"act p":"";document.getElementById("bF").className=c.strategy==="fliessband"?"act p":"";
+  document.getElementById("stratHint").textContent=c.strategy==="trend"?"BTC + ETH, Tagestrend (getestet 2020–26)":"altes Fließband, 40 Coins (nicht empfohlen)";
   const sw=document.getElementById("swBot");sw.className="sw"+(c.enabled?" on":"");
   document.getElementById("botHint").textContent=c.busy?"arbeitet gerade …":(c.enabled?"an – prüft automatisch alle 4 Stunden":"aus – keine neuen Käufe (Börsen-Stops bleiben aktiv)");
   document.getElementById("bP").className=c.mode==="paper"?"act p":"";document.getElementById("bL").className=c.mode==="live"?"act l":"";
@@ -370,17 +379,27 @@ async function load(){
     document.getElementById("upd").textContent=s.updated?`Lauf ${ago(s.updated)}`:"noch kein Lauf";
     renderTop(s);
     const g=s.regime?.green; document.getElementById("light").className="dot "+(g?"g":"r");
-    document.getElementById("lightTxt").textContent=g?"Marktampel grün":"Marktampel rot";
+    document.getElementById("lightTxt").textContent=s.engine==="trend"?(g?"BTC im Aufwärtstrend":"BTC ohne Trend"):(g?"Marktampel grün":"Marktampel rot");
     document.getElementById("cash").textContent=eur(s.cash);
     document.getElementById("open").textContent=`${(s.positions||[]).length} / ${s.rules?.max_pos??"–"}`;
     document.getElementById("fees").textContent=eur(s.fees_paid);
     document.getElementById("bar").textContent=s.engine==="watch"?new Date(s.updated).toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}):tfmt(s.last_bar);
-    document.getElementById("barLbl").textContent=s.engine==="watch"?"Letzter Check":"Letzte Kerze";
+    document.getElementById("barLbl").textContent=s.engine==="watch"?"Letzter Check":s.engine==="trend"?"Letzter Tag":"Letzte Kerze";
+    const tr=s.engine==="trend";
+    if(tr)document.getElementById("bar").textContent=new Date(s.last_bar).toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit"});
+    ["beltH","belt","detail"].forEach(i=>document.getElementById(i).style.display=tr?"none":"");
+    ["sigH","sigs"].forEach(i=>document.getElementById(i).style.display=tr?"":"none");
+    if(tr)document.getElementById("sigs").innerHTML=Object.entries(s.signals||{}).map(([p,v])=>{
+      const live=LP?.px?.[p]?.last, dist=((live??v.close)/v.sma-1)*100;
+      return `<div class="row"><span class="p">${p.replace("XBT","BTC").replace("EUR","")}</span>
+        <span class="r">${v.on?"Aufwärtstrend":"kein Trend"} · Schnitt50 ${eur0(v.sma)} · ${v.on?`raus unter ${eur0(v.sell_at)}`:`rein über ${eur0(v.buy_at)}`}</span>
+        <span class="num ${dist>=0?"up":"down"}">${dist>=0?"+":""}${dist.toFixed(1)}%</span></div>`}).join("")
+      +`<div class="row"><span class="r" style="color:var(--faint)">Entscheidung 1× täglich direkt nach Tagesschluss (00:00 UTC = 1 bzw. 2 Uhr deutscher Zeit). Zwischen den Grenzen passiert nichts.</span></div>`;
     const a=document.getElementById("alert");
     a.style.display=(s.halted||s.halted_day)?"block":"none";
     a.textContent=s.halted?"Notaus: maximaler Drawdown erreicht – keine neuen Trades.":"Tageslimit erreicht – heute keine neuen Trades.";
     spark(d.equity||[]); belt(s,d.events||[]); positions(s.positions||[]); log(d.events||[]);
-    document.getElementById("foot").innerHTML=(s.engine==="watch"?`Dauer-Überwachung: Kurse jede Minute, Kauf im Moment des Ausbruchs, Stops laufend nachgezogen.`:`Der Desk läuft alle ${s.timeframe_min/60||4} Stunden kurz nach Kerzenschluss.`)+` Kurse und offene Positionen aktualisieren sich alle 20 Sekunden live.${(d.modes||[]).length>1?` · <a style="color:var(--blue)" href="?mode=${s.mode==="live"?"paper":"live"}">zu ${s.mode==="live"?"Paper":"Live"} wechseln</a>`:""}`;
+    document.getElementById("foot").innerHTML=(s.engine==="trend"?`Trend-Desk: BTC und ETH je 50 %, Tagesschluss über 50-Tage-Schnitt +2 % = kaufen, unter −2 % = verkaufen.`:s.engine==="watch"?`Dauer-Überwachung: Kurse jede Minute, Kauf im Moment des Ausbruchs, Stops laufend nachgezogen.`:`Der Desk läuft alle ${s.timeframe_min/60||4} Stunden kurz nach Kerzenschluss.`)+` Kurse und offene Positionen aktualisieren sich alle 20 Sekunden live.${(d.modes||[]).length>1?` · <a style="color:var(--blue)" href="?mode=${s.mode==="live"?"paper":"live"}">zu ${s.mode==="live"?"Paper":"Live"} wechseln</a>`:""}`;
   }catch(e){document.getElementById("upd").textContent="keine Verbindung"}
 }
 load().then(liveTick); setInterval(load,30000); setInterval(liveTick,20000);

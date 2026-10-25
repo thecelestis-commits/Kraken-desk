@@ -103,3 +103,17 @@ auditor:
 # --- Live-Schalter ---------------------------------------------------------
 live:
   enabled: false                  # erst auf true, wenn Paper überzeugt
+
+# --- TREND-DESK (run_trend.py) – Standard-Strategie ------------------------
+# Getestet 2020–2026 (Binance-EUR + Kraken), echte Gebühren: BTC+ETH +1.685 %,
+# max. Rückgang −44 % (Halten +901 %, −75 %). Zufallsvergleich: nur 0,6 % besser.
+# Altcoins, 1h/4h, Ausbruch, Rotation, Mean-Reversion: alle nach Gebühren negativ.
+trend:
+  pairs: [XBTEUR, ETHEUR]
+  weight_pct: 50                  # je Coin 50 % des Kontos
+  sma_days: 50
+  band_pct: 2                     # rein über Schnitt +2 %, raus unter Schnitt −2 %
+  fee_buy_pct: 0.40               # Maker-Limit
+  fee_sell_pct: 0.40              # Maker-Limit (Paper); live Fallback Market 0,80 %
+  slippage_pct: 0.05
+  min_order_eur: 5
